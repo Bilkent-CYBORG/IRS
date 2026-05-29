@@ -1,13 +1,15 @@
 # Iterative Robust Satisficing
-Code and experiments of "Iterative Robust Satisficing: Minimizing Performance Degradation Under Distribution Shift" (ICML 2026).
+
+Code and experiments for "Iterative Robust Satisficing: Minimizing Performance Degradation Under Distribution Shift" (ICML 2026).
 
 ## Repository Layout
 
 ```text
 code/
 |-- cifar10lt_experiment.py      # CIFAR-10-LT long-tailed classification experiment
-|-- waterbirds_experiment.py     # Waterbirds spurious-correlation experiment
-|-- terraincognito.ipynb         # Additional TerraIncognita domain-generalization experiment
+|-- tabular.ipynb                # Tabular experiment
+|-- waterbirds.ipynb             # Waterbirds spurious-correlation experiment
+|-- terraincognito.ipynb         # TerraIncognita domain-generalization experiment
 `-- methods/
     |-- irs.py                   # Iterative Robust Satisficing
     |-- klrs.py                  # KL-RS baseline
@@ -22,7 +24,15 @@ code/
     `-- mmrex.py                 # MM-REx
 ```
 
-The main experiment files define a configuration dataclass near the top of the file and instantiate it at the bottom as `CONFIG = ...Config()`. To change seeds, methods, learning rates, imbalance factors, or output folders, edit this config before running.
+## Environment
+
+The code is written in Python/PyTorch. A typical setup is:
+
+```bash
+pip install torch torchvision numpy pandas matplotlib pillow tqdm timm seaborn
+```
+
+CUDA is recommended for the vision experiments.
 
 ## CIFAR-10-LT
 
@@ -33,21 +43,33 @@ cd code
 python cifar10lt_experiment.py
 ```
 
-By default, this runs CIFAR-10-LT with imbalance factor `100`, WideResNet-28-10, seed `42`, and the methods listed in `CIFAR10LTConfig.methods`. CIFAR-10 is downloaded automatically through `torchvision` into `./data`.
+This experiment runs CIFAR-10-LT long-tailed classification. CIFAR-10 is downloaded automatically through `torchvision` into `./data`.
 
+Main settings are defined in `CIFAR10LTConfig`, including the imbalance factor, seeds, methods, learning rates, number of epochs, and output directory.
 
 Outputs include per-epoch CSVs, class-wise accuracy CSVs, tail accuracy printed at the end of each method, `config.json`, and `comparison.png`.
 
-## Waterbirds
+## Tabular
 
-Run:
+Run the notebook:
 
-```bash
-cd code
-python waterbirds_experiment.py
+```text
+tabular.ipynb
 ```
 
-By default, the script expects Waterbirds under `./data/waterbirds`. If `download=True`, it attempts to download and prepare the dataset automatically. The expected prepared structure is:
+Open the notebook and run the cells in order. The notebook contains the tabular experiment, including default hyperparameters, optional hyperparameter search, and final multi-seed training.
+
+## Waterbirds
+
+Run the notebook:
+
+```text
+waterbirds.ipynb
+```
+
+Open `waterbirds.ipynb` and run the cells in order. The notebook contains the Waterbirds spurious-correlation experiment.
+
+The notebook expects/prepares Waterbirds locally in the code directory. The expected prepared structure is either:
 
 ```text
 data/waterbirds/
@@ -55,35 +77,24 @@ data/waterbirds/
 `-- images/
 ```
 
-Outputs include per-epoch CSVs, per-group test metrics, `summary_per_seed.csv`, `summary_aggregated.csv`, `group_accuracy_summary.csv`, `config.json`, and `comparison.png`.
+or:
+
+```text
+data/waterbird_complete95_forest2water2/
+|-- metadata.csv
+`-- images/
+```
+
+The notebook prints validation/test metrics, group accuracies, and runtime summaries for the enabled methods.
 
 ## TerraIncognita
 
-The TerraIncognita experiment is provided as a notebook:
+Run the notebook:
 
 ```text
 terraincognito.ipynb
 ```
 
-It is intended to be run in Colab or another notebook environment. The notebook uses DomainBed TerraIncognita, fine-tunes an ImageNet-1k-pretrained DeiT-S/16 backbone for 10 epochs, and evaluates on a held-out location. The default held-out domain is `location_100`.
-
-Important notebook settings:
-
-- `MANUAL_TERRA_ROOT`: set this if the TerraIncognita folder is already available locally.
-- `DOWNLOAD_WITH_DOMAINBED_IF_MISSING`: attempts to fetch TerraIncognita through DomainBed if needed.
-- `TEST_DOMAIN_SELECTOR`: held-out location, default `"location_100"`.
-- `METHOD_ENABLED`: enables/disables ERM, SAM, CVaR-DRO, and IRS-Instance.
-- `SHARED_HPARAMS` and `METHOD_HPARAMS`: training and method-specific hyperparameters.
+The notebook uses DomainBed TerraIncognita, fine-tunes an ImageNet-1k-pretrained DeiT-S/16 backbone for 10 epochs, and evaluates on a held-out location.
 
 The notebook saves checkpoints and optional test outputs for significance testing.
-
-## Method Keys
-
-The experiments support the following method keys:
-
-```text
-irs, klrs, erm, erm_adam, erm_sgd, sam, vrex, mmrex, irm, groupdro, chi2_dro, cvar_dro
-```
-
-Not every key is used in every experiment. If an unknown key is listed in `methods`, the script prints the available keys for that experiment.
-
